@@ -66,7 +66,7 @@ const Tree = ({ item, selectedValue, onSelect, parentPath }: TreeProps) => {
             <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90" defaultOpen>
                 <CollapsibleTrigger asChild>
                     <SidebarMenuSubButton>
-                        {/* <ChevronRightIcon className="transition-transform" /> */}
+                        <ChevronRightIcon className="transition-transform" />
                         <FolderIcon />
                         <span className="truncate">{name}</span>
                     </SidebarMenuSubButton>
