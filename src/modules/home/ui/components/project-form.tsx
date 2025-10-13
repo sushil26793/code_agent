@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "../../constant";
 import { ProjectList } from "./project-list";
+import { useClerk } from "@clerk/nextjs";
 
 
 const formSchema = z.object({
@@ -23,6 +24,7 @@ const formSchema = z.object({
 export const ProjectForm = () => {
     const router = useRouter();
     const [isFocused, setIsFocused] = useState(false);
+    const clerk=useClerk();
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -38,11 +40,14 @@ export const ProjectForm = () => {
             router.push(`/projects/${data.id}`)
         },
         onError: (error) => {
+            if(error?.data?.code==="UNAUTHORIZED"){
+                clerk.openSignIn();
+            }
             toast.error(error.message);
         }
     }));
     const isPending = createProject.isPending;
-    const isDisabled = isPending || form.formState.isValid;
+    const isDisabled = isPending || !form.formState.isValid;
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         await createProject.mutateAsync({ value: values.value })
@@ -82,7 +87,7 @@ export const ProjectForm = () => {
                             </kbd>
                             &nbsp; to submit
                         </div>
-                        <Button className={cn("size-8 rounded-full", isDisabled && "bg-muted-foreground border")} disabled={isDisabled}>
+                        <Button className={cn("size-8 rounded-full", isDisabled && "bg-muted-foreground border")} disabled={isDisabled} >
                             {isPending ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowUpIcon />}
                         </Button>
                     </div>

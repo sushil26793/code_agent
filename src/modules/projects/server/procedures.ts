@@ -1,19 +1,19 @@
 import { inngest } from "@/inngest/client";
 import { prisma } from "@/lib/db";
-import { baseProcedure, createTRPCRouter } from "@/trpc/init";
+import {  createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import z from "zod";
 import { generateSlug } from "random-word-slugs";
 import {TRPCError} from "@trpc/server";
 
 
 export const projectRouter = createTRPCRouter({
-     getOne: baseProcedure
+     getOne: protectedProcedure
      .input(z.object({
         id: z.string()
      }))
-     .query(async ({ input }) => {
+     .query(async ({ input,ctx }) => {
         const project = await prisma.project.findUnique({
-            where: { id: input.id },
+            where: { id: input.id,userId:ctx.auth.userId },
             include: {
                 messages: true
             }
@@ -21,8 +21,9 @@ export const projectRouter = createTRPCRouter({
         if(!project) throw new TRPCError({ code:"NOT_FOUND", message: "Project not found" });
         return project;
     }),
-    getMany: baseProcedure.query(async () => {
+    getMany: protectedProcedure.query(async ({ctx}) => {
         const projects = await prisma.project.findMany({
+            where:{userId:ctx.auth.userId},
             orderBy: { createdAt: "desc" },
             include: {
                 messages: true
@@ -30,15 +31,16 @@ export const projectRouter = createTRPCRouter({
         })
         return projects;
     }),
-    create: baseProcedure
+    create: protectedProcedure
         .input(
             z.object({
                 value: z.string().min(1, { message: "Message cannot be empty" }).max(1000,{message:"Value is too long."}),
             })
         )
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input ,ctx}) => {
             const createdProject = await prisma.project.create({
                 data: {
+                    userId:ctx.auth.userId,
                     name: generateSlug(2, { format: "kebab" }),
                     messages: {
                         create: {
