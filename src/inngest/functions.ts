@@ -1,9 +1,9 @@
 import { inngest } from "./client";
-import { gemini, createAgent, createTool, createNetwork, type Tool } from "@inngest/agent-kit";
+import { gemini, createAgent, createTool, createNetwork, type Tool,type Message, createState } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter"
 import { getLastTextMessageContent, getSandbox } from "./utills";
 import { z } from "zod";
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
 
 interface AgentState {
@@ -19,7 +19,28 @@ export const codeAgentFunction = inngest.createFunction(
       const sandbox = await Sandbox.create("vibe-nextjs-sushil-01")
       return sandbox.sandboxId;
     })
-    await step.sleep("wait-a-moment", "5s");
+    const previousMessages = await step.run("get-previous-messages", async () => {
+      const formattedMessage: Message[] = [];
+      const messages = await prisma.message.findMany({
+        where: {
+          projectId: event.data.projectId,
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      })
+      for (const message of messages) {
+        formattedMessage.push({
+          type: "text",
+          role: message.role === "ASSISTANT" ? "assistant" : "user",
+          content: message.content
+        })
+      }
+      return formattedMessage;
+    })
+
+    const state = createState<AgentState>({ summary: '', files: {} }, { messages: previousMessages })
+    // await step.sleep("wait-a-moment", "5s");
 
     const codeAgent = createAgent<AgentState>({
       name: "code-agent",
@@ -124,6 +145,7 @@ export const codeAgentFunction = inngest.createFunction(
     });
     const network = createNetwork<AgentState>({
       name: 'coding-agent-network',
+      defaultState:state,
       agents: [codeAgent],
       maxIter: 15,
       router: async ({ network }) => {
@@ -132,7 +154,34 @@ export const codeAgentFunction = inngest.createFunction(
         return codeAgent
       }
     })
-    const result = await network.run(event.data.value);
+    const result = await network.run(event.data.value,{state});
+
+      const fragmentTitleGenerator = createAgent<AgentState>({
+        name: "fragment-title-generator",
+        description: "A fragment title generator",
+        system: FRAGMENT_TITLE_PROMPT,
+        model: gemini({ model: "gemini-2.0-flash" }),
+
+      })
+
+      const responseGenerator = createAgent<AgentState>({
+        name: "response-generator",
+        description: "A response generator",
+        system: RESPONSE_PROMPT,
+        model: gemini({ model: "gemini-2.0-flash" })
+      })
+
+    const { output: fragmentTitleOutput } = await fragmentTitleGenerator.run(result.state.data.summary);
+    const { output: responseOutput } = await responseGenerator.run(result.state.data.summary);
+
+    const parseAgentOutput = (value: Message[]) => {
+      if (value[0].type !== "text") return "Fragment";
+      if (Array.isArray(value[0].content)) {
+        return value[0].content.map((txt) => txt).join('')
+      }
+      return value[0].content;
+    }
+
     const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
@@ -155,13 +204,13 @@ export const codeAgentFunction = inngest.createFunction(
       await prisma.message.create({
         data: {
           projectId: event.data.projectId,
-          content: result.state.data.summary,
+          content:parseAgentOutput(responseOutput),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandboxUrl,
-              title: "Fragment",
+              title: parseAgentOutput(fragmentTitleOutput),
               files: result.state.data.files
             }
           }
