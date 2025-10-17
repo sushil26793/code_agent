@@ -27,7 +27,8 @@ export const codeAgentFunction = inngest.createFunction(
         },
         orderBy: {
           createdAt: "desc"
-        }
+        },
+        take: 5
       })
       for (const message of messages) {
         formattedMessage.push({
@@ -36,7 +37,7 @@ export const codeAgentFunction = inngest.createFunction(
           content: message.content
         })
       }
-      return formattedMessage;
+      return formattedMessage.reverse();
     })
 
     const state = createState<AgentState>({ summary: '', files: {} }, { messages: previousMessages })
