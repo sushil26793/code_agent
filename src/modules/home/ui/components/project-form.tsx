@@ -16,6 +16,8 @@ import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "../../constant";
 import { ProjectList } from "./project-list";
 import { useClerk } from "@clerk/nextjs";
+import { QueryErrorBoundary } from "@/lib/error/boundries/QueryErrorBoundary";
+import { ComponentErrorBoundary } from "@/lib/error/boundries/ComponentErrorBoundary";
 
 
 const formSchema = z.object({
@@ -24,7 +26,7 @@ const formSchema = z.object({
 export const ProjectForm = () => {
     const router = useRouter();
     const [isFocused, setIsFocused] = useState(false);
-    const clerk=useClerk();
+    const clerk = useClerk();
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -43,10 +45,10 @@ export const ProjectForm = () => {
         },
         onError: (error) => {
             toast.error(error.message);
-            if(error?.data?.code==="UNAUTHORIZED"){
+            if (error?.data?.code === "UNAUTHORIZED") {
                 clerk.openSignIn();
             }
-            if(error.data?.code==="TOO_MANY_REQUESTS"){
+            if (error.data?.code === "TOO_MANY_REQUESTS") {
                 router.push('/pricing')
             }
         }
@@ -105,7 +107,7 @@ export const ProjectForm = () => {
                                 variant="outline"
                                 size="sm"
                                 className="bg-white dark:bg-sidebar"
-                                onClick={() => { onSelect(template.prompt)}}
+                                onClick={() => { onSelect(template.prompt) }}
                             >
                                 {template.emoji} {template.title}
                             </Button>
@@ -113,8 +115,11 @@ export const ProjectForm = () => {
                     }
                 </div>
             </section>
-
-            <ProjectList/> 
+            <QueryErrorBoundary queryName="projects.getMany">
+                <ComponentErrorBoundary componentName="ProjectList" inline>
+                    <ProjectList />
+                </ComponentErrorBoundary>
+            </QueryErrorBoundary>
         </Form>
     )
 }
