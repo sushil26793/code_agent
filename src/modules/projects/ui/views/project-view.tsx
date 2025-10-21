@@ -13,6 +13,8 @@ import Link from "next/link";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user-control";
 import { useAuth } from "@clerk/nextjs";
+import { QueryErrorBoundary } from "@/lib/error/boundries/QueryErrorBoundary";
+import { ComponentErrorBoundary } from "@/lib/error/boundries/ComponentErrorBoundary";
 interface Props {
     projectId: string
 }
@@ -29,11 +31,15 @@ export const ProjectView = ({ projectId }: Props) => {
                         <ProjectHeader projectId={projectId} />
                     </Suspense>
                     <Suspense fallback={<div>Loading messages...</div>}>
-                        <MessagesContainer
-                            projectId={projectId}
-                            activeFragment={activeFragment}
-                            setActiveFragment={setActiveFragment}
-                        />
+                        <QueryErrorBoundary queryName="messaages">
+                            <ComponentErrorBoundary componentName="MessagesContainer">
+                                <MessagesContainer
+                                    projectId={projectId}
+                                    activeFragment={activeFragment}
+                                    setActiveFragment={setActiveFragment}
+                                />
+                            </ComponentErrorBoundary>
+                        </QueryErrorBoundary>
                     </Suspense>
                 </ResizablePanel>
                 <ResizableHandle withHandle />

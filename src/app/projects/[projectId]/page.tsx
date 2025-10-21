@@ -1,3 +1,5 @@
+import { ComponentErrorBoundary } from "@/lib/error/boundries/ComponentErrorBoundary";
+import { QueryErrorBoundary } from "@/lib/error/boundries/QueryErrorBoundary";
 import { ProjectView } from "@/modules/projects/ui/views/project-view";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
@@ -18,7 +20,11 @@ const Page = async ({ params }: Props) => {
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
             <Suspense fallback={<p>Loading</p>}>
+            <QueryErrorBoundary queryName="Projects.getMany">
+                <ComponentErrorBoundary componentName="PorjectView">
             <ProjectView projectId={projectId} />
+            </ComponentErrorBoundary>
+            </QueryErrorBoundary>
             </Suspense>
         </HydrationBoundary>
     );

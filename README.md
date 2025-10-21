@@ -136,10 +136,10 @@ MIT License - feel free to use this project as inspiration for your own work.
 
 ## Contact
 
-Built by [Your Name]
+Built by [Sushil Satyarthi]
 - Portfolio: [your-portfolio.com]
-- LinkedIn: [linkedin.com/in/yourprofile]
-- GitHub: [@yourusername]
+- LinkedIn: [linkedin.com/in/sushil-kumar-0454ba185]   
+- GitHub: [@sushil26793]
 
 ---
 

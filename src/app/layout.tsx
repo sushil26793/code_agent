@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { ErrorProvider } from "@/providers/ErrorProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,11 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-    appearance={{
-      variables:{
-        colorPrimary:'#C96342'
-      }
-    }}
+      appearance={{
+        variables: {
+          colorPrimary: '#C96342'
+        }
+      }}
     >
       <TRPCReactProvider>
         <html lang="en" suppressContentEditableWarning>
@@ -43,7 +44,10 @@ export default function RootLayout({
           >
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
               <Toaster />
-              {children}
+              <ErrorProvider>
+                {children}
+
+              </ErrorProvider>
             </ThemeProvider>
           </body>
         </html>
