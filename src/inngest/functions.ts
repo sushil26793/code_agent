@@ -79,7 +79,7 @@ export const codeAgentFunction = inngest.createFunction(
           }
         }),
         createTool({
-          name: "createOrUpdateFiles",
+          name: "create_or_update_files",
           description: "Create or update files in the sandbox.",
           parameters: z.object({
             files: z.array(z.object({
@@ -88,7 +88,7 @@ export const codeAgentFunction = inngest.createFunction(
             }))
           }),
           handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
-            const newFiles = await step?.run("createOrUpdateFiles", async () => {
+            const newFiles = await step?.run("create_or_update_files", async () => {
               try {
                 const updatedFiles = network.state.data.files || {};
                 const sandbox = await getSandbox(sandboxId);
@@ -109,13 +109,13 @@ export const codeAgentFunction = inngest.createFunction(
           }
         }),
         createTool({
-          name: "readFiles",
+          name: "read_files",
           description: "Read files from the sandbox.",
           parameters: z.object({
             files: z.array(z.string())
           }),
           handler: async ({ files }, { step }) => {
-            return await step?.run("readFiles", async () => {
+            return await step?.run("read_files", async () => {
               try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = []
