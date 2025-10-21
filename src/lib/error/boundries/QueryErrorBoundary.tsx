@@ -1,13 +1,13 @@
 'use client';
 
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { ErrorLogger } from '../utils/error-logger';
-import { InlineError } from "../components/InlineError";
+import { InlineError } from '../components/InlineError';
 
 interface QueryErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ComponentType<{ error: Error; resetError: () => void }>;
+  fallback?: React.ComponentType<FallbackProps>;
   queryName?: string;
 }
 
@@ -28,9 +28,7 @@ export function QueryErrorBoundary({
               metadata: { queryName },
             });
           }}
-          FallbackComponent={({ error, resetErrorBoundary }) => (
-            <FallbackComponent error={error} resetError={resetErrorBoundary} />
-          )}
+          FallbackComponent={FallbackComponent}
         >
           {children}
         </ErrorBoundary>
